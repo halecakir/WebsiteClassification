@@ -50,13 +50,22 @@ df = pd.read_csv("dataset.csv")
 for index, row in df.iterrows():
     url = row["url"]
     try:
+        req = urllib.request.Request(url, data=None, 
+                                        headers={
+                                                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
+                                                })
+
         html = urllib.request.urlopen(url).read()
         raw_sequences = text_from_html(url, html)
         seq = [row["name"], row["cat"], " ".join(raw_sequences)]
-    except urllib.error.HTTPError:
-        seq = [row["name"], row["cat"], "urllib.error.HTTPError"]
-        print(row, "urllib.error.HTTPError")
+    except Exception as ex:
+        print(ex)
+        seq = [row["name"], row["cat"], str(ex)]
+        print(row)
     data.append(seq)
+
+with open("raw_data.pickle", 'wb') as target:
+    pickle.dump(data, target)
 
 stop_words = stopwords.words("english")
 lemmatizer=WordNetLemmatizer()
@@ -78,9 +87,6 @@ for d in data:
     tokens = [lemmatizer.lemmatize(i) for i in tokens]
     d[2] = tokens
 
-with open("preprocessed.pickle", 'w') as target:
+with open("preprocessed.pickle", 'wb') as target:
     pickle.dump(data, target)
 
-with open("saved_data.txt", "w") as target:
-    for d in data:
-        target.write("{};;{};;{}\n".format(d[0], d[1], " ".join(d[2])))
